@@ -20,12 +20,16 @@ func main() {
 	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	panicAtTheDisco(err)
 
+	counter := 0
+	packet := make([]byte, 65536)
+
 	for {
-		packet := make([]byte, 65536)
 		log.Printf("Listening for packages at: %d", port)
-		n, addr, err := conn.ReadFrom(packet)
+		_, _, err := conn.ReadFrom(packet)
 		panicAtTheDisco(err)
+		counter += 1
 		log.Printf("Read: %d from: %s", n, addr)
-		log.Printf("Packet: %s", string(packet))
+		log.Printf("Metric:'%s'", string(packet))
+		log.Printf("Total received: %d", counter)
 	}
 }

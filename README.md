@@ -49,3 +49,15 @@ docker run neowaylabs/statsdig:latest ./sender
 To send a lot of default test metrics to your sysdig agent.
 If you are feeling hardcore, just build the project, it is
 plain Go code with no dependencies besides Go itself.
+
+To run a simple ping pong on your own host just run:
+
+```
+go run cmd/receiver/main.go
+```
+
+and:
+
+```
+go run cmd/sender/main.go
+```

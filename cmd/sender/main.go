@@ -3,8 +3,9 @@ package main
 
 import (
 	"flag"
-	"github.com/NeowayLabs/statsdig"
 	"log"
+
+	"github.com/NeowayLabs/statsdig"
 )
 
 func panicAtTheDisco(err error) {
@@ -26,7 +27,8 @@ func main() {
 	panicAtTheDisco(err)
 
 	for i := 0; i < count; i++ {
-		sampler.Count(metric)
+		err := sampler.Count(metric)
+		panicAtTheDisco(err)
 	}
 
 	log.Println("Done")

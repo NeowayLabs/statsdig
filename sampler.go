@@ -46,21 +46,21 @@ func NewSampler(addr string) (*Sampler, error) {
 
 // Count sends a counter metric as specified here:
 // https://github.com/b/statsd_spec#counters
-func (sampler *Sampler) Count(name string) {
+func (sampler *Sampler) Count(name string) error {
 	countType := "c"
 	message := format(name, 1, countType)
-	//TODO: remove all debugging from metrics
 	n, err := sampler.write(message)
 	if err != nil {
-		fmt.Printf("count error: %s\n", err)
+		return err
 	}
 	if n != len(message) {
-		fmt.Printf(
-			"sent only %d from %d\n",
-			n,
+		return fmt.Errorf(
+			"expected to send %d but sent %d",
 			len(message),
+			n,
 		)
 	}
+	return nil
 }
 
 func format(name string, value int, metricType string) []byte {
