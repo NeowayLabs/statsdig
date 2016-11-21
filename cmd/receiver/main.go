@@ -25,7 +25,7 @@ func main() {
 
 	for {
 		log.Printf("Listening for packages at: %d", port)
-		_, _, err := conn.ReadFrom(packet)
+		n, addr, err := conn.ReadFrom(packet)
 		panicAtTheDisco(err)
 		counter += 1
 		log.Printf("Read: %d from: %s", n, addr)
