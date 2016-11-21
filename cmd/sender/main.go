@@ -1,4 +1,4 @@
-// gen generates lots of metrics so you can debug on your dash
+// sender generates lots of metrics so you can debug on your dash
 package main
 
 import (

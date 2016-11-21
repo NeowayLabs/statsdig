@@ -48,8 +48,7 @@ func NewSampler(addr string) (*Sampler, error) {
 // https://github.com/b/statsd_spec#counters
 func (sampler *Sampler) Count(name string) {
 	countType := "c"
-	defaultIncrement := 1
-	message := format(name, defaultIncrement, countType)
+	message := format(name, 1, countType)
 	//TODO: remove all debugging from metrics
 	n, err := sampler.write(message)
 	if err != nil {
