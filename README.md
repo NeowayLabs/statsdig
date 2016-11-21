@@ -24,7 +24,10 @@ citizen on the API.
 Also we add here some tools that helped us to debug problems like
 metrics disappearing (usually our fault), etc.
 
-More on [Sysdig StatsD magic here](https://support.sysdigcloud.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD)
+More on Sysdig StatsD magic:
+
+* [Metrics Integration: StatsD](https://support.sysdigcloud.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD)
+* [StatsD Teleportation](https://support.sysdigcloud.com/hc/en-us/articles/204470339)
 
 
 ## API Reference
@@ -40,7 +43,7 @@ docker image with all the commands embedded on them.
 You can just run:
 
 ```
-docker run statsdig:latest ./sender
+docker run neowaylabs/statsdig:latest ./sender
 ```
 
 To send a lot of default test metrics to your sysdig agent.
