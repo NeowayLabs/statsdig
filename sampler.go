@@ -1,3 +1,6 @@
+// statsdig is a minimalist statsd client focused
+// on integrating with sysdig cloud services.
+// Although it can work with plain StatsD just fine.
 package statsdig
 
 import (
@@ -5,6 +8,7 @@ import (
 	"net"
 )
 
+// Sampler is how you will be able to sample metrics.
 type Sampler struct {
 	conn net.PacketConn
 	addr *net.UDPAddr
@@ -14,10 +18,17 @@ func (s *Sampler) write(data []byte) (int, error) {
 	return s.conn.WriteTo(data, s.addr)
 }
 
+// NewSysdigSampler creates a sampler suited to work
+// with the sysdig cloud client, sending metrics to localhost
+// at the default statsd port.
 func NewSysdigSampler(addr string) (*Sampler, error) {
 	return NewSampler("127.0.0.1:8125")
 }
 
+// NewSampler creates a sampler suited to work
+// with any statsd server listening add the given addr,
+// where addr must be formatted just as the addr provided
+// to net.ResolveUDPAddr function.
 func NewSampler(addr string) (*Sampler, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
