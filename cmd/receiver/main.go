@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync/atomic"
 )
 
 func panicAtTheDisco(err error) {
@@ -13,18 +14,14 @@ func panicAtTheDisco(err error) {
 	}
 }
 
-type metric struct {
-	addr net.Addr
-	msg  string
-}
-
-func listener(conn net.PacketConn, received chan<- metric) {
+func listener(conn net.PacketConn, counter *int64) {
 
 	packet := make([]byte, 1024)
 	for {
-		_, addr, err := conn.ReadFrom(packet)
+		_, _, err := conn.ReadFrom(packet)
 		panicAtTheDisco(err)
-		received <- metric{addr: addr, msg: string(packet)}
+		atomic.AddInt64(counter, 1)
+		log.Println(*counter)
 	}
 }
 
@@ -32,23 +29,15 @@ func main() {
 	var port int
 	flag.IntVar(&port, "port", 8125, "port to listen to")
 
-	counter := 0
-	received := make(chan metric, 10000)
+	var counter int64
 
 	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	panicAtTheDisco(err)
 
-	listeners := 100
+	listeners := 10
 
 	for i := 0; i < listeners; i++ {
-		go listener(conn, received)
+		go listener(conn, &counter)
 	}
-
-	for {
-		log.Printf("Listening for packages at: %d", port)
-		m := <-received
-		counter += 1
-		log.Printf("Read: %s from: %s", m.msg, m.addr)
-		log.Printf("Total received: %d", counter)
-	}
+	listener(conn, &counter)
 }
