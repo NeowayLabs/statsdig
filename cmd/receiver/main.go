@@ -33,15 +33,16 @@ func main() {
 	flag.IntVar(&port, "port", 8125, "port to listen to")
 
 	counter := 0
-	received := make(chan metric)
+	received := make(chan metric, 10000)
 
 	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	panicAtTheDisco(err)
 
-	go listener(conn, received)
-	go listener(conn, received)
-	go listener(conn, received)
-	go listener(conn, received)
+	listeners := 100
+
+	for i := 0; i < listeners; i++ {
+		go listener(conn, received)
+	}
 
 	for {
 		log.Printf("Listening for packages at: %d", port)
