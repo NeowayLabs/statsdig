@@ -13,23 +13,37 @@ func panicAtTheDisco(err error) {
 	}
 }
 
+type metric struct {
+	addr net.Addr
+	msg  string
+}
+
+func listener(port int, received chan<- metric) {
+	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
+	panicAtTheDisco(err)
+
+	packet := make([]byte, 1024)
+	for {
+		_, addr, err := conn.ReadFrom(packet)
+		panicAtTheDisco(err)
+		received <- metric{addr: addr, msg: string(packet)}
+	}
+}
+
 func main() {
 	var port int
 	flag.IntVar(&port, "port", 8125, "port to listen to")
 
-	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
-	panicAtTheDisco(err)
-
 	counter := 0
-	packet := make([]byte, 65536)
+	received := make(chan metric)
+
+	go listener(port, received)
 
 	for {
 		log.Printf("Listening for packages at: %d", port)
-		n, addr, err := conn.ReadFrom(packet)
-		panicAtTheDisco(err)
+		m := <-received
 		counter += 1
-		log.Printf("Read: %d from: %s", n, addr)
-		log.Printf("Metric:'%s'", string(packet))
+		log.Printf("Read: %s from: %s", m.msg, m.addr)
 		log.Printf("Total received: %d", counter)
 	}
 }
