@@ -18,9 +18,7 @@ type metric struct {
 	msg  string
 }
 
-func listener(port int, received chan<- metric) {
-	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
-	panicAtTheDisco(err)
+func listener(conn net.PacketConn, received chan<- metric) {
 
 	packet := make([]byte, 1024)
 	for {
@@ -37,7 +35,13 @@ func main() {
 	counter := 0
 	received := make(chan metric)
 
-	go listener(port, received)
+	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
+	panicAtTheDisco(err)
+
+	go listener(conn, received)
+	go listener(conn, received)
+	go listener(conn, received)
+	go listener(conn, received)
 
 	for {
 		log.Printf("Listening for packages at: %d", port)
