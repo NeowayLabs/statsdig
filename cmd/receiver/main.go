@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"sync/atomic"
+	"time"
 )
 
 func panicAtTheDisco(err error) {
@@ -21,7 +21,6 @@ func listener(conn net.PacketConn, counter *int64) {
 		_, _, err := conn.ReadFrom(packet)
 		panicAtTheDisco(err)
 		atomic.AddInt64(counter, 1)
-		log.Println(*counter)
 	}
 }
 
@@ -39,5 +38,9 @@ func main() {
 	for i := 0; i < listeners; i++ {
 		go listener(conn, &counter)
 	}
-	listener(conn, &counter)
+
+	for {
+		time.Sleep(1 * time.Second)
+		fmt.Println(counter)
+	}
 }
