@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sender
+spec:
+  template:
+    metadata:
+      name: sender
+    spec:
+      containers:
+      - name: sender
+        image: neowaylabs/statsdig
+        command: ["./sender"]
+      restartPolicy: Never

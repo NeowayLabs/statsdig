@@ -18,7 +18,7 @@ func main() {
 	var count int
 	var metric string
 
-	flag.IntVar(&count, "count", 10000, "amount of counts to perform")
+	flag.IntVar(&count, "count", 1000000, "amount of counts to perform")
 	flag.StringVar(&metric, "metric", "statsdig.test", "metric name to test")
 	flag.Parse()
 
