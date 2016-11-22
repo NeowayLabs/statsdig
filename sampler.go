@@ -21,7 +21,7 @@ func (s *Sampler) write(data []byte) (int, error) {
 // NewSysdigSampler creates a sampler suited to work
 // with the sysdig cloud client, sending metrics to localhost
 // at the default statsd port.
-func NewSysdigSampler(addr string) (*Sampler, error) {
+func NewSysdigSampler() (*Sampler, error) {
 	return NewSampler("127.0.0.1:8125")
 }
 

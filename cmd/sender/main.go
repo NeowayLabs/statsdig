@@ -23,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	log.Printf("Starting sampler metric[%s] count[%d]", metric, count)
-	sampler, err := statsdig.NewSysdigSampler("127.0.0.1:8125")
+	sampler, err := statsdig.NewSysdigSampler()
 	panicAtTheDisco(err)
 
 	for i := 0; i < count; i++ {
