@@ -3,5 +3,5 @@ version=latest
 build:
 	docker build . -t neowaylabs/statsdig:$(version)
 
-push: build
+publish: build
 	docker push neowaylabs/statsdig:$(version)
