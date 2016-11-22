@@ -3,12 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
-	"time"
-
 	"sync/atomic"
+	"time"
 )
+
+var counter uint64
 
 func panicAtTheDisco(err error) {
 	if err != nil {
@@ -16,17 +16,12 @@ func panicAtTheDisco(err error) {
 	}
 }
 
-var counter uint64
-
 func listener(conn net.PacketConn) {
-
 	packet := make([]byte, 1024)
 	for {
 		_, _, err := conn.ReadFrom(packet)
 		panicAtTheDisco(err)
-
 		atomic.AddUint64(&counter, 1)
-
 	}
 }
 
@@ -37,17 +32,14 @@ func main() {
 	conn, err := net.ListenPacket("udp", fmt.Sprintf(":%d", port))
 	panicAtTheDisco(err)
 
-	go listener(conn)
-	go listener(conn)
-	go listener(conn)
-	go listener(conn)
-	go listener(conn)
+	listeners := 5
 
-	log.Printf("Listening for packages at: %d", port)
+	for i := 0; i < listeners; i++ {
+		go listener(conn)
+	}
 
 	for {
-		time.Sleep(3 * time.Second)
-
-		log.Printf("Total received: %d", atomic.LoadUint64(&counter))
+		time.Sleep(1 * time.Second)
+		fmt.Println(atomic.LoadUint64(&counter))
 	}
 }
