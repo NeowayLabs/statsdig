@@ -30,11 +30,11 @@ func NewSysdigSampler() (*Sampler, error) {
 // where addr must be formatted just as the addr provided
 // to Go's net.ResolveUDPAddr function.
 func NewSampler(addr string) (*Sampler, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	udpAddr, err := net.ResolveUDPAddr("udp4", addr)
 	if err != nil {
 		return nil, fmt.Errorf("resolve udp address failed: %s", err)
 	}
-	conn, err := net.ListenPacket("udp", ":0")
+	conn, err := net.ListenPacket("udp4", ":0")
 	if err != nil {
 		return nil, fmt.Errorf("connection creation failed: %s", err)
 	}
