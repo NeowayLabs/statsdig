@@ -20,7 +20,7 @@ func main() {
 	var metric string
 	delay := 5 * time.Millisecond
 
-	flag.IntVar(&count, "count", 100000, "amount of counts to perform")
+	flag.IntVar(&count, "count", 10000, "amount of counts to perform")
 	flag.DurationVar(&delay, "delay", delay, "delay in ms before sending metrics")
 	flag.StringVar(&metric, "metric", "statsdig.test", "metric name to test")
 	flag.Parse()
