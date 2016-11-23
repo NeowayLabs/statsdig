@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"log"
+	"time"
 
 	"github.com/NeowayLabs/statsdig"
 )
@@ -17,8 +18,10 @@ func panicAtTheDisco(err error) {
 func main() {
 	var count int
 	var metric string
+	delay := 5 * time.Millisecond
 
 	flag.IntVar(&count, "count", 1000000, "amount of counts to perform")
+	flag.DurationVar(&delay, "delay", delay, "delay in ms before sending metrics")
 	flag.StringVar(&metric, "metric", "statsdig.test", "metric name to test")
 	flag.Parse()
 
@@ -29,6 +32,7 @@ func main() {
 	for i := 0; i < count; i++ {
 		err := sampler.Count(metric)
 		panicAtTheDisco(err)
+		time.Sleep(delay)
 	}
 
 	log.Println("Done")

@@ -9,6 +9,7 @@ spec:
     spec:
       containers:
       - name: sender
-        image: neowaylabs/statsdig
+        image: neowaylabs/statsdig:latest
+        imagePullPolicy: Always
         command: ["./sender"]
       restartPolicy: Never
