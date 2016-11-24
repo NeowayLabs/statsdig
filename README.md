@@ -32,7 +32,7 @@ More on Sysdig StatsD magic:
 
 ## API Reference
 
-TODO: Add Go doc ref
+[API Reference docs](https://godoc.org/github.com/NeowayLabs/statsdig)
 
 
 ## Debugging Metric Collection
@@ -46,18 +46,24 @@ You can just run:
 docker run neowaylabs/statsdig:latest ./sender
 ```
 
-To send a lot of default test metrics to your sysdig agent.
+To send a lot of default test metrics to your sysdig agent
+(of course you must run this on a host that has the agent running).
+
 If you are feeling hardcore, just build the project, it is
-plain Go code with no dependencies besides Go itself.
-
-To run a simple ping pong on your own host just run:
-
-```
-go run cmd/receiver/main.go
-```
-
-and:
+plain Go code with no dependencies besides Go itself:
 
 ```
 go run cmd/sender/main.go
 ```
+
+If you are using Kubernetes you can just run:
+
+```
+kubectl apply -f tests/k8s/sender.yml
+```
+
+Using our test example that will run a job on your cluster that will
+generate metrics for you.
+
+In the past we had problems running directly on host X on docker X on
+Kubernetes, that is why we have all these debugging options.
