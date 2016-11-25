@@ -29,6 +29,9 @@ More on Sysdig StatsD magic:
 * [Metrics Integration: StatsD](https://support.sysdigcloud.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD)
 * [StatsD Teleportation](https://support.sysdigcloud.com/hc/en-us/articles/204470339)
 
+Sysdig magic has a know limitation that required the udp to be under IPv4,
+so the library is hardcoded to always use **udp4** as the protocol.
+
 
 ## API Reference
 
