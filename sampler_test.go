@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/NeowayLabs/statsdig"
 )
 
 type msgListener struct {
@@ -23,7 +25,7 @@ func abortOnErr(t *testing.T, err error) {
 }
 
 func (l *msgListener) Listen(t *testing.T, port int) {
-	if l.conn == nil {
+	if l.conn != nil {
 		t.Fatal("Already listening")
 	}
 
@@ -44,12 +46,16 @@ func (l *msgListener) Listen(t *testing.T, port int) {
 				}
 			default:
 				{
-					_, _, err := l.conn.ReadFrom(packet)
+					n, _, err := l.conn.ReadFrom(packet)
 					if err != nil {
 						// May happen when we call close
+						t.Logf("Error reading packet: %s", err)
 						return
 					}
-					l.addMsg(string(packet))
+					if n == 0 {
+						continue
+					}
+					l.addMsg(string(packet[:n]))
 				}
 			}
 		}
@@ -74,10 +80,13 @@ func (l *msgListener) addMsg(msg string) {
 
 func (l *msgListener) Get(i int, timeout time.Duration) string {
 
-	deadline := time.Now() + timeout
+	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		l.Lock()
-		ret := l.msgs[i]
+		ret := ""
+		if i < len(l.msgs) {
+			ret = l.msgs[i]
+		}
 		l.Unlock()
 		if ret != "" {
 			return ret
@@ -87,30 +96,33 @@ func (l *msgListener) Get(i int, timeout time.Duration) string {
 	return ""
 }
 
-func getlocalhost(port int) {
+func getlocalhost(port int) string {
 	return fmt.Sprintf("127.0.0.1:%d", port)
 }
 
 func newListener() *msgListener {
-	return &msgListener{}
+	return &msgListener{
+		isclosed: true,
+	}
 }
 
-func getcount(name string) []byte {
-	return []byte(fmt.Sprintf(
+func getcount(name string) string {
+	return fmt.Sprintf(
 		"%s:1|c",
 		name,
-	))
+	)
 }
 
 func TestCount(t *testing.T) {
 	const port = 8125
 	metricName := "TestCount"
 
-	listener := newListener(t)
+	listener := newListener()
 	defer listener.Close(t)
 
-	listener.Listen()
-	sampler := statsdig.NewSampler(getlocalhost(port))
+	listener.Listen(t, port)
+	sampler, err := statsdig.NewSampler(getlocalhost(port))
+	abortOnErr(t, err)
 
 	count := 10
 
@@ -118,7 +130,7 @@ func TestCount(t *testing.T) {
 		sampler.Count(metricName)
 	}
 
-	timeout := 1 * timeout.Second
+	timeout := 1 * time.Second
 	expectedMetric := getcount(metricName)
 
 	for i := 0; i < count; i++ {
