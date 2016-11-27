@@ -113,10 +113,15 @@ func getcount(name string) string {
 	)
 }
 
-func TestCount(t *testing.T) {
-	const port = 8125
-	metricName := "TestCount"
+type samplerFunc func(*testing.T, *statsdig.Sampler) error
+type getExpectedMetricFunc func() string
 
+func testMetric(
+	t *testing.T,
+	port int,
+	sample samplerFunc,
+	getExpectedMetric getExpectedMetricFunc,
+) {
 	listener := newListener()
 	defer listener.Close(t)
 
@@ -127,11 +132,12 @@ func TestCount(t *testing.T) {
 	count := 10
 
 	for i := 0; i < count; i++ {
-		sampler.Count(metricName)
+		err := sample(t, sampler)
+		abortOnErr(t, err)
 	}
 
 	timeout := 1 * time.Second
-	expectedMetric := getcount(metricName)
+	expectedMetric := getExpectedMetric()
 
 	for i := 0; i < count; i++ {
 		msg := listener.Get(i, timeout)
@@ -143,4 +149,19 @@ func TestCount(t *testing.T) {
 	if msg != "" {
 		t.Fatalf("Received unexpected msg: %s", msg)
 	}
+}
+
+func TestCount(t *testing.T) {
+	const port = 8125
+	metricName := "TestCount"
+	testMetric(
+		t,
+		port,
+		func(t *testing.T, sampler *statsdig.Sampler) error {
+			return sampler.Count(metricName)
+		},
+		func() string {
+			return getcount(metricName)
+		},
+	)
 }
