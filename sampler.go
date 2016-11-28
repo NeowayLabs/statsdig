@@ -17,7 +17,8 @@ type Tag struct {
 	Value string
 }
 
-// Sampler abstraction, makes it easy to test metric generation
+// Sampler abstraction, makes it easy to have multiple implementations
+// of a sampler, which can be useful to testing
 type Sampler interface {
 
 	// Count sends a increment to a count metric with given name
@@ -27,20 +28,20 @@ type Sampler interface {
 	Gauge(name string, value int, tags ...Tag) error
 }
 
-// sampler is how you will be able to sample metrics.
-type statsd struct {
+// UDPSampler is a sampler that sends metrics through UDP
+type Statsd struct {
 	conn net.PacketConn
 	addr *net.UDPAddr
 }
 
-func (s *statsd) write(data []byte) (int, error) {
+func (s *Statsd) write(data []byte) (int, error) {
 	return s.conn.WriteTo(data, s.addr)
 }
 
 // NewSysdigSampler creates a sampler suited to work
 // with the sysdig cloud client, sending metrics to localhost
 // at the default statsd port.
-func NewSysdigSampler() (*statsd, error) {
+func NewSysdigSampler() (*Statsd, error) {
 	return NewSampler("127.0.0.1:8125")
 }
 
@@ -48,7 +49,7 @@ func NewSysdigSampler() (*statsd, error) {
 // with any statsd server listening add the given addr,
 // where addr must be serializeted just as the addr provided
 // to Go's net.ResolveUDPAddr function.
-func NewSampler(addr string) (*statsd, error) {
+func NewSampler(addr string) (*Statsd, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", addr)
 	if err != nil {
 		return nil, fmt.Errorf("resolve udp address failed: %s", err)
@@ -57,7 +58,7 @@ func NewSampler(addr string) (*statsd, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connection creation failed: %s", err)
 	}
-	return &statsd{
+	return &Statsd{
 		conn: conn,
 		addr: udpAddr,
 	}, nil
@@ -65,19 +66,21 @@ func NewSampler(addr string) (*statsd, error) {
 
 // Count sends a counter metric as specified here:
 // https://github.com/b/statsd_spec#counters
-func (sampler *statsd) Count(name string, tags ...Tag) error {
+func (sampler *Statsd) Count(name string, tags ...Tag) error {
 	countType := "c"
 	message := serialize(name, 1, countType, tags...)
 	return sampler.send(message)
 }
 
-func (sampler *statsd) Gauge(name string, value int, tags ...Tag) error {
+// Gauge sends a gauge metric as specified here:
+// https://github.com/b/statsd_spec#gauges
+func (sampler *Statsd) Gauge(name string, value int, tags ...Tag) error {
 	countType := "g"
 	message := serialize(name, value, countType, tags...)
 	return sampler.send(message)
 }
 
-func (sampler *statsd) send(message []byte) error {
+func (sampler *Statsd) send(message []byte) error {
 	n, err := sampler.write(message)
 	if err != nil {
 		return err
