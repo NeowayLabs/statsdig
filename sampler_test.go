@@ -50,7 +50,6 @@ func (l *msgListener) Listen(t *testing.T, port int) {
 					n, _, err := l.conn.ReadFrom(packet)
 					if err != nil {
 						// May happen when we call close
-						t.Logf("Error reading packet: %s", err)
 						return
 					}
 					if n == 0 {
@@ -107,7 +106,7 @@ func newListener() *msgListener {
 	}
 }
 
-func getcount(name string, tags ...statsdig.Tag) string {
+func getmetric(name string, tags ...statsdig.Tag) string {
 	var strtags []string
 	for _, tag := range tags {
 		strtags = append(strtags, tag.Name+"="+tag.Value)
@@ -171,7 +170,7 @@ func TestCount(t *testing.T) {
 			return sampler.Count(metricName)
 		},
 		func() string {
-			return getcount(metricName)
+			return getmetric(metricName)
 		},
 	)
 }
@@ -196,7 +195,7 @@ func TestCountWithTags(t *testing.T) {
 			return sampler.Count(metricName, tags...)
 		},
 		func() string {
-			return getcount(metricName, tags...)
+			return getmetric(metricName, tags...)
 		},
 	)
 }

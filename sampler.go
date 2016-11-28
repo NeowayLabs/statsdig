@@ -6,6 +6,7 @@ package statsdig
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 // Tag represents a Sysdig StatsD tag, which is a extension
@@ -63,7 +64,7 @@ func NewSampler(addr string) (*statsd, error) {
 // https://github.com/b/statsd_spec#counters
 func (sampler *statsd) Count(name string, tags ...Tag) error {
 	countType := "c"
-	message := format(name, 1, countType)
+	message := format(name, 1, countType, tags...)
 	n, err := sampler.write(message)
 	if err != nil {
 		return err
@@ -78,11 +79,23 @@ func (sampler *statsd) Count(name string, tags ...Tag) error {
 	return nil
 }
 
-func format(name string, value int, metricType string) []byte {
+func format(
+	name string,
+	value int,
+	metricType string,
+	tags ...Tag,
+) []byte {
+	var strtags []string
+	for _, tag := range tags {
+		strtags = append(strtags, tag.Name+"="+tag.Value)
+	}
+	fulltags := ""
+	if len(strtags) > 0 {
+		fulltags += "#" + strings.Join(strtags, ",")
+	}
 	return []byte(fmt.Sprintf(
-		"%s:%d|%s",
+		"%s%s:1|c",
 		name,
-		value,
-		metricType,
+		fulltags,
 	))
 }
