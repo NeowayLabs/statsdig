@@ -20,8 +20,11 @@ type Tag struct {
 // Sampler abstraction, makes it easy to test metric generation
 type Sampler interface {
 
-	// Send a 1 increment to a count metric with given name
+	// Count sends a increment to a count metric with given name
 	Count(name string, tags ...Tag) error
+
+	// Gauge sets the gauge with the given name to the given value
+	Gauge(name string, value int, tags ...Tag) error
 }
 
 // sampler is how you will be able to sample metrics.
@@ -79,6 +82,23 @@ func (sampler *statsd) Count(name string, tags ...Tag) error {
 	return nil
 }
 
+func (sampler *statsd) Gauge(name string, value int, tags ...Tag) error {
+	countType := "g"
+	message := serialize(name, value, countType, tags...)
+	n, err := sampler.write(message)
+	if err != nil {
+		return err
+	}
+	if n != len(message) {
+		return fmt.Errorf(
+			"expected to send %d but sent %d",
+			len(message),
+			n,
+		)
+	}
+	return nil
+}
+
 func serialize(
 	name string,
 	value int,
@@ -94,8 +114,10 @@ func serialize(
 		fulltags += "#" + strings.Join(strtags, ",")
 	}
 	return []byte(fmt.Sprintf(
-		"%s%s:1|c",
+		"%s%s:%d|%s",
 		name,
 		fulltags,
+		value,
+		metricType,
 	))
 }

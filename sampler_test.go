@@ -149,36 +149,44 @@ func testMetric(
 	}
 }
 
-type testcase struct {
-	name   string
-	metric string
-	tags   []statsdig.Tag
-	result string
+type countcase struct {
+	Name   string
+	Metric string
+	Tags   []statsdig.Tag
+	Result string
+}
+
+type gaugecase struct {
+	Name   string
+	Metric string
+	Tags   []statsdig.Tag
+	Result string
+	Gauge  int
 }
 
 func TestCount(t *testing.T) {
 
-	cases := []testcase{
-		testcase{
-			name:   "testCount",
-			metric: "TestCount",
-			result: "TestCount:1|c",
+	cases := []countcase{
+		countcase{
+			Name:   "testCount",
+			Metric: "TestCount",
+			Result: "TestCount:1|c",
 		},
-		testcase{
-			name:   "testCountWithTag",
-			metric: "TestCountTag",
-			tags: []statsdig.Tag{
+		countcase{
+			Name:   "testCountWithTag",
+			Metric: "TestCountTag",
+			Tags: []statsdig.Tag{
 				statsdig.Tag{
 					Name:  "tag",
 					Value: "hi",
 				},
 			},
-			result: "TestCountTag#tag=hi:1|c",
+			Result: "TestCountTag#tag=hi:1|c",
 		},
-		testcase{
-			name:   "testCountWithTags",
-			metric: "TestCountTags",
-			tags: []statsdig.Tag{
+		countcase{
+			Name:   "testCountWithTags",
+			Metric: "TestCountTags",
+			Tags: []statsdig.Tag{
 				statsdig.Tag{
 					Name:  "tag",
 					Value: "hi",
@@ -188,18 +196,74 @@ func TestCount(t *testing.T) {
 					Value: "1",
 				},
 			},
-			result: "TestCountTags#tag=hi,tag2=1:1|c",
+			Result: "TestCountTags#tag=hi,tag2=1:1|c",
 		},
 	}
 
 	for _, tcase := range cases {
-		t.Run(tcase.name, func(t *testing.T) {
+		t.Run(tcase.Name, func(t *testing.T) {
 			testMetric(
 				t,
 				func(t *testing.T, sampler statsdig.Sampler) error {
-					return sampler.Count(tcase.metric, tcase.tags...)
+					return sampler.Count(tcase.Metric, tcase.Tags...)
 				},
-				tcase.result,
+				tcase.Result,
+			)
+		})
+	}
+}
+
+func TestGauge(t *testing.T) {
+
+	cases := []gaugecase{
+		gaugecase{
+			Name:   "testGauge",
+			Metric: "TestGauge",
+			Gauge:  500,
+			Result: "TestGauge:500|g",
+		},
+		gaugecase{
+			Name:   "testGaugeWithTag",
+			Metric: "TestGaugeTag",
+			Gauge:  666,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "gauging",
+				},
+			},
+			Result: "TestGaugeTag#tag=gauging:666|g",
+		},
+		gaugecase{
+			Name:   "testGaugeWithTags",
+			Metric: "TestGaugeTags",
+			Gauge:  10,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "TestGaugeTags#tag=hi,tag2=1:10|g",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Gauge(
+						tcase.Metric,
+						tcase.Gauge,
+						tcase.Tags...,
+					)
+				},
+				tcase.Result,
 			)
 		})
 	}
