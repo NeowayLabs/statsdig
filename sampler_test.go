@@ -18,6 +18,13 @@ type msgListener struct {
 	isclosed bool
 }
 
+var port int = 8124
+
+func getport() int {
+	port += 1
+	return port
+}
+
 func abortOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
@@ -110,13 +117,13 @@ type getExpectedMetricFunc func() string
 
 func testMetric(
 	t *testing.T,
-	port int,
 	sample samplerFunc,
 	getExpectedMetric getExpectedMetricFunc,
 ) {
 	listener := newListener()
 	defer listener.Close(t)
 
+	port := getport()
 	listener.Listen(t, port)
 	sampler, err := statsdig.NewSampler(getlocalhost(port))
 	abortOnErr(t, err)
@@ -144,11 +151,9 @@ func testMetric(
 }
 
 func TestCount(t *testing.T) {
-	const port = 8125
 	metricName := "TestCount"
 	testMetric(
 		t,
-		port,
 		func(t *testing.T, sampler statsdig.Sampler) error {
 			return sampler.Count(metricName)
 		},
@@ -158,8 +163,26 @@ func TestCount(t *testing.T) {
 	)
 }
 
+func TestCountWithTag(t *testing.T) {
+	metricName := "TestCountWithTag"
+	tags := []statsdig.Tag{
+		statsdig.Tag{
+			Name:  "tag",
+			Value: "hi",
+		},
+	}
+	testMetric(
+		t,
+		func(t *testing.T, sampler statsdig.Sampler) error {
+			return sampler.Count(metricName, tags...)
+		},
+		func() string {
+			return "TestCountWithTag#tag=hi:1|c"
+		},
+	)
+}
+
 func TestCountWithTags(t *testing.T) {
-	const port = 8126
 	metricName := "TestCountWithTags"
 	tags := []statsdig.Tag{
 		statsdig.Tag{
@@ -173,7 +196,6 @@ func TestCountWithTags(t *testing.T) {
 	}
 	testMetric(
 		t,
-		port,
 		func(t *testing.T, sampler statsdig.Sampler) error {
 			return sampler.Count(metricName, tags...)
 		},
