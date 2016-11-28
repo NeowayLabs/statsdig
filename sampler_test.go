@@ -118,7 +118,7 @@ type getExpectedMetricFunc func() string
 func testMetric(
 	t *testing.T,
 	sample samplerFunc,
-	getExpectedMetric getExpectedMetricFunc,
+	result string,
 ) {
 	listener := newListener()
 	defer listener.Close(t)
@@ -136,12 +136,11 @@ func testMetric(
 	}
 
 	timeout := 1 * time.Second
-	expectedMetric := getExpectedMetric()
 
 	for i := 0; i < count; i++ {
 		msg := listener.Get(i, timeout)
-		if msg != expectedMetric {
-			t.Fatalf("Expected %q but got %q", expectedMetric, msg)
+		if msg != result {
+			t.Fatalf("Expected %q but got %q", result, msg)
 		}
 	}
 	msg := listener.Get(count, 100*time.Millisecond)
@@ -200,9 +199,7 @@ func TestCount(t *testing.T) {
 				func(t *testing.T, sampler statsdig.Sampler) error {
 					return sampler.Count(tcase.metric, tcase.tags...)
 				},
-				func() string {
-					return tcase.result
-				},
+				tcase.result,
 			)
 		})
 	}
