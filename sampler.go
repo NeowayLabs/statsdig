@@ -68,23 +68,16 @@ func NewSampler(addr string) (*statsd, error) {
 func (sampler *statsd) Count(name string, tags ...Tag) error {
 	countType := "c"
 	message := serialize(name, 1, countType, tags...)
-	n, err := sampler.write(message)
-	if err != nil {
-		return err
-	}
-	if n != len(message) {
-		return fmt.Errorf(
-			"expected to send %d but sent %d",
-			len(message),
-			n,
-		)
-	}
-	return nil
+	return sampler.send(message)
 }
 
 func (sampler *statsd) Gauge(name string, value int, tags ...Tag) error {
 	countType := "g"
 	message := serialize(name, value, countType, tags...)
+	return sampler.send(message)
+}
+
+func (sampler *statsd) send(message []byte) error {
 	n, err := sampler.write(message)
 	if err != nil {
 		return err
