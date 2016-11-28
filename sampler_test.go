@@ -113,7 +113,7 @@ func getcount(name string) string {
 	)
 }
 
-type samplerFunc func(*testing.T, *statsdig.Sampler) error
+type samplerFunc func(*testing.T, statsdig.Sampler) error
 type getExpectedMetricFunc func() string
 
 func testMetric(
@@ -157,7 +157,7 @@ func TestCount(t *testing.T) {
 	testMetric(
 		t,
 		port,
-		func(t *testing.T, sampler *statsdig.Sampler) error {
+		func(t *testing.T, sampler statsdig.Sampler) error {
 			return sampler.Count(metricName)
 		},
 		func() string {
