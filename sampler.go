@@ -43,7 +43,7 @@ func NewSysdigSampler() (*statsd, error) {
 
 // NewSampler creates a sampler suited to work
 // with any statsd server listening add the given addr,
-// where addr must be formatted just as the addr provided
+// where addr must be serializeted just as the addr provided
 // to Go's net.ResolveUDPAddr function.
 func NewSampler(addr string) (*statsd, error) {
 	udpAddr, err := net.ResolveUDPAddr("udp4", addr)
@@ -64,7 +64,7 @@ func NewSampler(addr string) (*statsd, error) {
 // https://github.com/b/statsd_spec#counters
 func (sampler *statsd) Count(name string, tags ...Tag) error {
 	countType := "c"
-	message := format(name, 1, countType, tags...)
+	message := serialize(name, 1, countType, tags...)
 	n, err := sampler.write(message)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (sampler *statsd) Count(name string, tags ...Tag) error {
 	return nil
 }
 
-func format(
+func serialize(
 	name string,
 	value int,
 	metricType string,
