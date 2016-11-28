@@ -8,11 +8,19 @@ import (
 	"net"
 )
 
+// Tag represents a Sysdig StatsD tag, which is a extension
+// to add more dimensions to your metric, like prometheus labels.
+// More: https://support.sysdigcloud.com/hc/en-us/articles/204376099-Metrics-integrations-StatsD
+type Tag struct {
+	Name  string
+	Value string
+}
+
 // Sampler abstraction, makes it easy to test metric generation
 type Sampler interface {
 
 	// Send a 1 increment to a count metric with given name
-	Count(name string) error
+	Count(name string, tags ...Tag) error
 }
 
 // sampler is how you will be able to sample metrics.
@@ -53,7 +61,7 @@ func NewSampler(addr string) (*statsd, error) {
 
 // Count sends a counter metric as specified here:
 // https://github.com/b/statsd_spec#counters
-func (sampler *statsd) Count(name string) error {
+func (sampler *statsd) Count(name string, tags ...Tag) error {
 	countType := "c"
 	message := format(name, 1, countType)
 	n, err := sampler.write(message)

@@ -3,6 +3,7 @@ package statsdig_test
 import (
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -106,10 +107,19 @@ func newListener() *msgListener {
 	}
 }
 
-func getcount(name string) string {
+func getcount(name string, tags ...statsdig.Tag) string {
+	var strtags []string
+	for _, tag := range tags {
+		strtags = append(strtags, tag.Name+"="+tag.Value)
+	}
+	fulltags := ""
+	if len(strtags) > 0 {
+		fulltags += "#" + strings.Join(strtags, ",")
+	}
 	return fmt.Sprintf(
-		"%s:1|c",
+		"%s%s:1|c",
 		name,
+		fulltags,
 	)
 }
 
@@ -162,6 +172,31 @@ func TestCount(t *testing.T) {
 		},
 		func() string {
 			return getcount(metricName)
+		},
+	)
+}
+
+func TestCountWithTags(t *testing.T) {
+	const port = 8126
+	metricName := "TestCountWithTags"
+	tags := []statsdig.Tag{
+		statsdig.Tag{
+			Name:  "tag1",
+			Value: "1",
+		},
+		statsdig.Tag{
+			Name:  "tag2",
+			Value: "kmlo",
+		},
+	}
+	testMetric(
+		t,
+		port,
+		func(t *testing.T, sampler statsdig.Sampler) error {
+			return sampler.Count(metricName, tags...)
+		},
+		func() string {
+			return getcount(metricName, tags...)
 		},
 	)
 }
