@@ -150,57 +150,60 @@ func testMetric(
 	}
 }
 
+type testcase struct {
+	name   string
+	metric string
+	tags   []statsdig.Tag
+	result string
+}
+
 func TestCount(t *testing.T) {
-	metricName := "TestCount"
-	testMetric(
-		t,
-		func(t *testing.T, sampler statsdig.Sampler) error {
-			return sampler.Count(metricName)
-		},
-		func() string {
-			return "TestCount:1|c"
-		},
-	)
-}
 
-func TestCountWithTag(t *testing.T) {
-	metricName := "TestCountWithTag"
-	tags := []statsdig.Tag{
-		statsdig.Tag{
-			Name:  "tag",
-			Value: "hi",
+	cases := []testcase{
+		testcase{
+			name:   "testCount",
+			metric: "TestCount",
+			result: "TestCount:1|c",
+		},
+		testcase{
+			name:   "testCountWithTag",
+			metric: "TestCountTag",
+			tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+			},
+			result: "TestCountTag#tag=hi:1|c",
+		},
+		testcase{
+			name:   "testCountWithTags",
+			metric: "TestCountTags",
+			tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			result: "TestCountTags#tag=hi,tag2=1:1|c",
 		},
 	}
-	testMetric(
-		t,
-		func(t *testing.T, sampler statsdig.Sampler) error {
-			return sampler.Count(metricName, tags...)
-		},
-		func() string {
-			return "TestCountWithTag#tag=hi:1|c"
-		},
-	)
-}
 
-func TestCountWithTags(t *testing.T) {
-	metricName := "TestCountWithTags"
-	tags := []statsdig.Tag{
-		statsdig.Tag{
-			Name:  "tag1",
-			Value: "1",
-		},
-		statsdig.Tag{
-			Name:  "tag2",
-			Value: "kmlo",
-		},
+	for _, tcase := range cases {
+		t.Run(tcase.name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Count(tcase.metric, tcase.tags...)
+				},
+				func() string {
+					return tcase.result
+				},
+			)
+		})
 	}
-	testMetric(
-		t,
-		func(t *testing.T, sampler statsdig.Sampler) error {
-			return sampler.Count(metricName, tags...)
-		},
-		func() string {
-			return "TestCountWithTags#tag1=1,tag2=kmlo:1|c"
-		},
-	)
 }
