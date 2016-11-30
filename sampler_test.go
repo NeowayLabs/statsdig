@@ -18,6 +18,13 @@ type msgListener struct {
 	isclosed bool
 }
 
+var port int = 8124
+
+func getport() int {
+	port += 1
+	return port
+}
+
 func abortOnErr(t *testing.T, err error) {
 	if err != nil {
 		t.Fatal(err)
@@ -49,7 +56,6 @@ func (l *msgListener) Listen(t *testing.T, port int) {
 					n, _, err := l.conn.ReadFrom(packet)
 					if err != nil {
 						// May happen when we call close
-						t.Logf("Error reading packet: %s", err)
 						return
 					}
 					if n == 0 {
@@ -106,25 +112,18 @@ func newListener() *msgListener {
 	}
 }
 
-func getcount(name string) string {
-	return fmt.Sprintf(
-		"%s:1|c",
-		name,
-	)
-}
-
-type samplerFunc func(*testing.T, *statsdig.Sampler) error
+type samplerFunc func(*testing.T, statsdig.Sampler) error
 type getExpectedMetricFunc func() string
 
 func testMetric(
 	t *testing.T,
-	port int,
 	sample samplerFunc,
-	getExpectedMetric getExpectedMetricFunc,
+	result string,
 ) {
 	listener := newListener()
 	defer listener.Close(t)
 
+	port := getport()
 	listener.Listen(t, port)
 	sampler, err := statsdig.NewSampler(getlocalhost(port))
 	abortOnErr(t, err)
@@ -137,12 +136,11 @@ func testMetric(
 	}
 
 	timeout := 1 * time.Second
-	expectedMetric := getExpectedMetric()
 
 	for i := 0; i < count; i++ {
 		msg := listener.Get(i, timeout)
-		if msg != expectedMetric {
-			t.Fatalf("Expected %q but got %q", expectedMetric, msg)
+		if msg != result {
+			t.Fatalf("Expected %q but got %q", result, msg)
 		}
 	}
 	msg := listener.Get(count, 100*time.Millisecond)
@@ -151,17 +149,122 @@ func testMetric(
 	}
 }
 
+type countcase struct {
+	Name   string
+	Metric string
+	Tags   []statsdig.Tag
+	Result string
+}
+
+type gaugecase struct {
+	Name   string
+	Metric string
+	Tags   []statsdig.Tag
+	Result string
+	Gauge  int
+}
+
 func TestCount(t *testing.T) {
-	const port = 8125
-	metricName := "TestCount"
-	testMetric(
-		t,
-		port,
-		func(t *testing.T, sampler *statsdig.Sampler) error {
-			return sampler.Count(metricName)
+
+	cases := []countcase{
+		countcase{
+			Name:   "testCount",
+			Metric: "TestCount",
+			Result: "TestCount:1|c",
 		},
-		func() string {
-			return getcount(metricName)
+		countcase{
+			Name:   "testCountWithTag",
+			Metric: "TestCountTag",
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+			},
+			Result: "TestCountTag#tag=hi:1|c",
 		},
-	)
+		countcase{
+			Name:   "testCountWithTags",
+			Metric: "TestCountTags",
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "TestCountTags#tag=hi,tag2=1:1|c",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Count(tcase.Metric, tcase.Tags...)
+				},
+				tcase.Result,
+			)
+		})
+	}
+}
+
+func TestGauge(t *testing.T) {
+
+	cases := []gaugecase{
+		gaugecase{
+			Name:   "testGauge",
+			Metric: "TestGauge",
+			Gauge:  500,
+			Result: "TestGauge:500|g",
+		},
+		gaugecase{
+			Name:   "testGaugeWithTag",
+			Metric: "TestGaugeTag",
+			Gauge:  666,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "gauging",
+				},
+			},
+			Result: "TestGaugeTag#tag=gauging:666|g",
+		},
+		gaugecase{
+			Name:   "testGaugeWithTags",
+			Metric: "TestGaugeTags",
+			Gauge:  10,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "TestGaugeTags#tag=hi,tag2=1:10|g",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Gauge(
+						tcase.Metric,
+						tcase.Gauge,
+						tcase.Tags...,
+					)
+				},
+				tcase.Result,
+			)
+		})
+	}
 }
