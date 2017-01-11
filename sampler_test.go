@@ -164,7 +164,7 @@ type gaugecase struct {
 	Gauge  int
 }
 
-func ExampleSampler_Count() {
+func ExampleUDPSampler_Count() {
 	// Creating a Sysdig specific sampler
 	sampler, err := statsdig.NewSysdigSampler()
 	if err != nil {
