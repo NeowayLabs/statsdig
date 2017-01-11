@@ -164,6 +164,18 @@ type gaugecase struct {
 	Gauge  int
 }
 
+func ExampleSampler_Count() {
+	// Creating a Sysdig specific sampler
+	sampler, err := statsdig.NewSysdigSampler()
+	if err != nil {
+		return
+	}
+	sampler.Count("metric.name", statsdig.Tag{
+		Name:  "tagname",
+		Value: "tagvalue",
+	})
+}
+
 func TestCount(t *testing.T) {
 
 	cases := []countcase{
