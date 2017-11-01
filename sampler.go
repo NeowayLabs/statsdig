@@ -26,6 +26,9 @@ type Sampler interface {
 
 	// Gauge sets the gauge with the given name to the given value
 	Gauge(name string, value int, tags ...Tag) error
+
+	// Time sets the time in milliseconds with the given name to the given value
+	Time(name string, value int, tags ...Tag) error
 }
 
 // UDPSampler is a sampler that sends metrics through UDP
@@ -80,6 +83,13 @@ func (sampler *UDPSampler) Gauge(name string, value int, tags ...Tag) error {
 	return sampler.send(message)
 }
 
+// Time sends a time metric as specified here:
+// https://github.com/b/statsd_spec#timers
+func (sampler *UDPSampler) Time(name string, value int, tags ...Tag) error {
+	timeType := "ms"
+	message := serialize(name, value, timeType, tags...)
+	return sampler.send(message)
+}
 func (sampler *UDPSampler) send(message []byte) error {
 	n, err := sampler.write(message)
 	if err != nil {
