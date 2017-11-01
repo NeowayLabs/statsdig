@@ -164,6 +164,14 @@ type gaugecase struct {
 	Gauge  int
 }
 
+type metriccase struct {
+	Name   string
+	Metric string
+	Tags   []statsdig.Tag
+	Result string
+	Value  int
+}
+
 func ExampleUDPSampler_Count() {
 	// Creating a Sysdig specific sampler
 	sampler, err := statsdig.NewSysdigSampler()
@@ -274,6 +282,58 @@ func TestGauge(t *testing.T) {
 						tcase.Gauge,
 						tcase.Tags...,
 					)
+				},
+				tcase.Result,
+			)
+		})
+	}
+}
+
+func TestTime(t *testing.T) {
+
+	cases := []metriccase{
+		metriccase{
+			Name:   "testTime",
+			Metric: "testTime",
+			Value:  1,
+			Result: "testTime:1|ms",
+		},
+		metriccase{
+			Name:   "testTimeWithTag",
+			Metric: "testTimeTag",
+			Value:  1,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+			},
+			Result: "testTimeTag#tag=hi:1|ms",
+		},
+		metriccase{
+			Name:   "testTimeWithTags",
+			Metric: "testTimeTags",
+			Value:  1,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "testTimeTags#tag=hi,tag2=1:1|ms",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Time(tcase.Metric, tcase.Value, tcase.Tags...)
 				},
 				tcase.Result,
 			)
