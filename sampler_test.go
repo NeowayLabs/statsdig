@@ -164,14 +164,6 @@ type gaugecase struct {
 	Gauge  int
 }
 
-type testcase struct {
-	Name   string
-	Metric string
-	Tags   []statsdig.Tag
-	Result string
-	Value  int
-}
-
 func ExampleUDPSampler_Count() {
 	// Creating a Sysdig specific sampler
 	sampler, err := statsdig.NewSysdigSampler()
