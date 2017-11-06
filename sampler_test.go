@@ -164,7 +164,7 @@ type gaugecase struct {
 	Gauge  int
 }
 
-type metriccase struct {
+type testcase struct {
 	Name   string
 	Metric string
 	Tags   []statsdig.Tag
@@ -291,29 +291,37 @@ func TestGauge(t *testing.T) {
 
 func TestTime(t *testing.T) {
 
-	cases := []metriccase{
-		metriccase{
+	type testcase struct {
+		Name   string
+		Metric string
+		Tags   []statsdig.Tag
+		Result string
+		Value  time.Duration
+	}
+
+	cases := []testcase{
+		testcase{
 			Name:   "testTime",
 			Metric: "testTime",
-			Value:  1,
+			Value:  time.Duration(1 * time.Millisecond),
 			Result: "testTime:1|ms",
 		},
-		metriccase{
+		testcase{
 			Name:   "testTimeWithTag",
 			Metric: "testTimeTag",
-			Value:  1,
+			Value:  time.Duration(1 * time.Minute),
 			Tags: []statsdig.Tag{
 				statsdig.Tag{
 					Name:  "tag",
 					Value: "hi",
 				},
 			},
-			Result: "testTimeTag#tag=hi:1|ms",
+			Result: "testTimeTag#tag=hi:60000|ms",
 		},
-		metriccase{
+		testcase{
 			Name:   "testTimeWithTags",
 			Metric: "testTimeTags",
-			Value:  1,
+			Value:  time.Duration(1000000),
 			Tags: []statsdig.Tag{
 				statsdig.Tag{
 					Name:  "tag",
