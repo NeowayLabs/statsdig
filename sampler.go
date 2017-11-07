@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"time"
 )
 
 // Tag represents a Sysdig StatsD tag, which is a extension
@@ -26,6 +27,9 @@ type Sampler interface {
 
 	// Gauge sets the gauge with the given name to the given value
 	Gauge(name string, value int, tags ...Tag) error
+
+	// Time sets duration in milliseconds with the given name to the given value
+	Time(name string, value time.Duration, tags ...Tag) error
 }
 
 // UDPSampler is a sampler that sends metrics through UDP
@@ -80,6 +84,14 @@ func (sampler *UDPSampler) Gauge(name string, value int, tags ...Tag) error {
 	return sampler.send(message)
 }
 
+// Time sends a time metric as specified here:
+// https://github.com/b/statsd_spec#timers
+func (sampler *UDPSampler) Time(name string, value time.Duration, tags ...Tag) error {
+	timeType := "ms"
+	ms := int(value / time.Millisecond)
+	message := serialize(name, ms, timeType, tags...)
+	return sampler.send(message)
+}
 func (sampler *UDPSampler) send(message []byte) error {
 	n, err := sampler.write(message)
 	if err != nil {

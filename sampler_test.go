@@ -280,3 +280,63 @@ func TestGauge(t *testing.T) {
 		})
 	}
 }
+
+func TestTime(t *testing.T) {
+
+	type testcase struct {
+		Name   string
+		Metric string
+		Tags   []statsdig.Tag
+		Result string
+		Value  time.Duration
+	}
+
+	cases := []testcase{
+		testcase{
+			Name:   "testTime",
+			Metric: "testTime",
+			Value:  time.Duration(1 * time.Millisecond),
+			Result: "testTime:1|ms",
+		},
+		testcase{
+			Name:   "testTimeWithTag",
+			Metric: "testTimeTag",
+			Value:  time.Duration(1 * time.Minute),
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+			},
+			Result: "testTimeTag#tag=hi:60000|ms",
+		},
+		testcase{
+			Name:   "testTimeWithTags",
+			Metric: "testTimeTags",
+			Value:  time.Duration(1000000),
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "testTimeTags#tag=hi,tag2=1:1|ms",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.Time(tcase.Metric, tcase.Value, tcase.Tags...)
+				},
+				tcase.Result,
+			)
+		})
+	}
+}
