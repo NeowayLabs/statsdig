@@ -88,7 +88,7 @@ func (sampler *UDPSampler) Gauge(name string, value int, tags ...Tag) error {
 // https://github.com/b/statsd_spec#timers
 func (sampler *UDPSampler) Time(name string, value time.Duration, tags ...Tag) error {
 	timeType := "ms"
-	ms := int(value) / int(time.Millisecond)
+	ms := int(value / time.Millisecond)
 	message := serialize(name, ms, timeType, tags...)
 	return sampler.send(message)
 }
