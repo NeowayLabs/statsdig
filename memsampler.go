@@ -3,6 +3,7 @@ package statsdig
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 // MemSampler is a sampler that gathers metrics in memory
@@ -41,12 +42,26 @@ func (s *MemSampler) GetGauge(name string, value int, tags ...Tag) int {
 	return s.get(serialized)
 }
 
+func (s *MemSampler) Time(name string, value time.Duration, tags ...Tag) error {
+	serialized := serializeTime(name, value, tags)
+	s.add(serialized)
+	return nil
+}
+
+func (s *MemSampler) GetTime(name string, value time.Duration, tags ...Tag) int {
+	serialized := serializeTime(name, value, tags)
+	return s.get(serialized)
+}
 func serializeCount(name string, tags []Tag) string {
 	return fmt.Sprintf("count:%s:%v", name, tags)
 }
 
 func serializeGauge(name string, value int, tags []Tag) string {
 	return fmt.Sprintf("gauge:%s:%d:%v", name, value, tags)
+}
+
+func serializeTime(name string, value time.Duration, tags []Tag) string {
+	return fmt.Sprintf("time:%s:%d:%v", name, value, tags)
 }
 
 func (s *MemSampler) add(serialized string) {
