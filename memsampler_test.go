@@ -10,6 +10,7 @@ import (
 
 func TestMemSampler(t *testing.T) {
 	count := 100
+	countFloat := 100.00
 	var wg sync.WaitGroup
 	s := statsdig.NewMemSampler()
 	tags := []statsdig.Tag{
@@ -20,6 +21,7 @@ func TestMemSampler(t *testing.T) {
 	}
 
 	wg.Add(count)
+	wg.Add(int(countFloat))
 	expectedTime := time.Duration(1000 * time.Millisecond)
 	for i := 0; i < count; i++ {
 		go func() {
@@ -29,6 +31,9 @@ func TestMemSampler(t *testing.T) {
 			s.Gauge("gauge", 777, tags...)
 			s.Time("time", expectedTime)
 			s.Time("time", expectedTime, tags...)
+			s.GaugeFloat("gaugefloat", 666.99)
+			s.GaugeFloat("gaugefloat", 777.41, tags...)
+			wg.Done()
 			wg.Done()
 		}()
 	}
@@ -41,6 +46,17 @@ func TestMemSampler(t *testing.T) {
 				name,
 				counter(),
 				count,
+			)
+		}
+	}
+
+	checkMetricFloat := func(name string, counterFloat func() float64) {
+		if counterFloat() != countFloat {
+			t.Fatalf(
+				"%s: expected %v but got %v",
+				name,
+				counterFloat(),
+				countFloat,
 			)
 		}
 	}
@@ -59,6 +75,14 @@ func TestMemSampler(t *testing.T) {
 
 	checkMetric("gaugeWithTags", func() int {
 		return s.GetGauge("gauge", 777, tags...)
+	})
+
+	checkMetricFloat("gaugefloat", func() float64 {
+		return s.GetGaugeFloat("gaugefloat", 666.99)
+	})
+
+	checkMetricFloat("gaugeFloatWithTags", func() float64 {
+		return s.GetGaugeFloat("gaugefloat", 777.41, tags...)
 	})
 
 	checkMetric("time", func() int {

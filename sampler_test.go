@@ -164,6 +164,14 @@ type gaugecase struct {
 	Gauge  int
 }
 
+type gaugefloatcase struct {
+	Name       string
+	Metric     string
+	Tags       []statsdig.Tag
+	Result     string
+	GaugeFloat float64
+}
+
 func ExampleUDPSampler_Count() {
 	// Creating a Sysdig specific sampler
 	sampler, err := statsdig.NewSysdigSampler()
@@ -272,6 +280,62 @@ func TestGauge(t *testing.T) {
 					return sampler.Gauge(
 						tcase.Metric,
 						tcase.Gauge,
+						tcase.Tags...,
+					)
+				},
+				tcase.Result,
+			)
+		})
+	}
+}
+
+func TestGaugeFloat(t *testing.T) {
+
+	cases := []gaugefloatcase{
+		gaugefloatcase{
+			Name:       "testGaugeFloat",
+			Metric:     "testGaugeFloat",
+			GaugeFloat: 500.012,
+			Result:     "testGaugeFloat:500.012|gf",
+		},
+		gaugefloatcase{
+			Name:       "testGaugeFloatWithTag",
+			Metric:     "TestGaugeFloatTag",
+			GaugeFloat: 666.12,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "gaugingfloat",
+				},
+			},
+			Result: "TestGaugeFloatTag#tag=gaugingfloat:666.12|gf",
+		},
+		gaugefloatcase{
+			Name:       "testGaugeFloatWithTags",
+			Metric:     "TestGaugeFloatTags",
+			GaugeFloat: 10.155,
+			Tags: []statsdig.Tag{
+				statsdig.Tag{
+					Name:  "tag",
+					Value: "hi",
+				},
+				statsdig.Tag{
+					Name:  "tag2",
+					Value: "1",
+				},
+			},
+			Result: "TestGaugeFloatTags#tag=hi,tag2=1:10.155|gf",
+		},
+	}
+
+	for _, tcase := range cases {
+		t.Run(tcase.Name, func(t *testing.T) {
+			testMetric(
+				t,
+				func(t *testing.T, sampler statsdig.Sampler) error {
+					return sampler.GaugeFloat(
+						tcase.Metric,
+						tcase.GaugeFloat,
 						tcase.Tags...,
 					)
 				},
