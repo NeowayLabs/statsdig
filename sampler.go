@@ -18,6 +18,10 @@ type Tag struct {
 	Value string
 }
 
+type valueType interface {
+	int | float64
+}
+
 // Sampler abstraction, makes it easy to have multiple implementations
 // of a sampler, which can be useful to testing
 type Sampler interface {
@@ -27,6 +31,9 @@ type Sampler interface {
 
 	// Gauge sets the gauge with the given name to the given value
 	Gauge(name string, value int, tags ...Tag) error
+
+	// GaugeFloat sets the gauge with the given name to the given float64 value
+	GaugeFloat(name string, value float64, tags ...Tag) error
 
 	// Time sets duration in milliseconds with the given name to the given value
 	Time(name string, value time.Duration, tags ...Tag) error
@@ -84,6 +91,14 @@ func (sampler *UDPSampler) Gauge(name string, value int, tags ...Tag) error {
 	return sampler.send(message)
 }
 
+// Gauge sends a gauge metric as specified here:
+// https://github.com/b/statsd_spec#gauges
+func (sampler *UDPSampler) GaugeFloat(name string, value float64, tags ...Tag) error {
+	countType := "gf"
+	message := serialize(name, value, countType, tags...)
+	return sampler.send(message)
+}
+
 // Time sends a time metric as specified here:
 // https://github.com/b/statsd_spec#timers
 func (sampler *UDPSampler) Time(name string, value time.Duration, tags ...Tag) error {
@@ -107,9 +122,9 @@ func (sampler *UDPSampler) send(message []byte) error {
 	return nil
 }
 
-func serialize(
+func serialize[VT valueType](
 	name string,
-	value int,
+	value VT,
 	metricType string,
 	tags ...Tag,
 ) []byte {
@@ -122,7 +137,7 @@ func serialize(
 		fulltags += "#" + strings.Join(strtags, ",")
 	}
 	return []byte(fmt.Sprintf(
-		"%s%s:%d|%s",
+		"%s%s:%v|%s",
 		name,
 		fulltags,
 		value,
